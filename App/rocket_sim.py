@@ -1,8 +1,7 @@
-from . import rocket
+from App.rocket import Rocket
+from Database import database
 import sqlite3
 
-# initializes game count
-game_count = 0
 
 rocket_chars = []
 rocket_calcs = []
@@ -51,7 +50,6 @@ def rocket_attributes():
                    "stage2_burn_t": stage2_burn_t, "stage1_struct_mass": stage1_struct_mass,
                    "stage2_struct_mass": stage2_struct_mass, "diameter": rocket_diameter,
                    "length": length, "fuel_mass": fuel_mass}
-
 
     return rocket_info
 
@@ -105,72 +103,81 @@ def rocket_choices(choice, rocket_model):
         print("Sorry that is not a choice, try again")
 
 
-# bulk of game logic
-intro()
-while True:
-    if game_count < 1:
-        user_input = input("Do you want to continue (Y/N)?: ")
-    else:
-        user_input = input("Do you want to use another rocket (Y/N)?: ")
+def main():
+    # initializes game count
+    global game_count
+    game_count = 0
 
-    # breaks loop
-    if 'n' in user_input.lower():
-        print("Okay, bye!")
-        break
+    # bulk of game logic
+    intro()
+    while True:
+        if game_count < 1:
+            user_input = input("Do you want to continue (Y/N)?: ")
+        else:
+            user_input = input("Do you want to use another rocket (Y/N)?: ")
 
-    # retrieves data from user
-    rocket_attrs = rocket_attributes()
+        # breaks loop
+        if 'n' in user_input.lower():
+            print("Okay, bye!")
+            break
 
-    # creates new rocket object
-    user_rocket = rocket(rocket_attrs["thrust"], rocket_attrs["fuel_burn"], rocket_attrs["name"],
-                         rocket_attrs["spec_impulse"], rocket_attrs["stage1_burn_t"],
-                         rocket_attrs["stage2_burn_t"], rocket_attrs["stage1_struct_mass"],
-                         rocket_attrs["stage2_struct_mass"], rocket_attrs["diameter"],
-                         rocket_attrs["length"], rocket_attrs["fuel_mass"])
+        # retrieves data from user
+        rocket_attrs = rocket_attributes()
 
-    storage_option = input("Would you like to store your rocket's information (Y/N)?: ")
-    if 'y' in storage_option.lower():
-        storage_option = "yes"
-        # creates new tuple for rocket data
-        rocket_data = (rocket_attrs["thrust"], rocket_attrs["fuel_burn"], rocket_attrs["name"],
+        # creates new rocket object
+        user_rocket = Rocket(rocket_attrs["thrust"], rocket_attrs["fuel_burn"], rocket_attrs["name"],
+                                 rocket_attrs["spec_impulse"], rocket_attrs["stage1_burn_t"],
+                                 rocket_attrs["stage2_burn_t"], rocket_attrs["stage1_struct_mass"],
+                                 rocket_attrs["stage2_struct_mass"], rocket_attrs["diameter"],
+                                 rocket_attrs["length"], rocket_attrs["fuel_mass"])
+
+        storage_option = input("Would you like to store your rocket's information (Y/N)?: ")
+        if 'y' in storage_option.lower():
+            storage_option = "yes"
+            # creates new tuple for rocket data
+            rocket_data = (rocket_attrs["thrust"], rocket_attrs["fuel_burn"], rocket_attrs["name"],
                            rocket_attrs["spec_impulse"], rocket_attrs["stage1_burn_t"],
                            rocket_attrs["stage2_burn_t"], rocket_attrs["stage1_struct_mass"],
                            rocket_attrs["stage2_struct_mass"], rocket_attrs["diameter"],
                            rocket_attrs["length"], rocket_attrs["fuel_mass"])
 
-        # appends rocket info into list for database input
-        rocket_chars.append(rocket_data)
+            # appends rocket info into list for database input
+            rocket_chars.append(rocket_data)
 
-    # monitors exit intent
-    while 'q' not in user_input.lower():
-        user_input = input("What's next?: ")
-        rocket_choices(user_input, user_rocket)
+        # monitors exit intent
+        while 'q' not in user_input.lower():
+            user_input = input("What's next?: ")
+            rocket_choices(user_input, user_rocket)
 
-        if "info" in user_input.lower():
-            info()
+            if "info" in user_input.lower():
+                info()
 
-        elif "intro" in user_input.lower():
-            intro()
+            elif "intro" in user_input.lower():
+                intro()
 
-    if storage_option == "yes":
-        # stores rocket calculations in a tuple
-        store_rocket_calcs = (user_rocket.rocket_name(), user_rocket.initial_mass(),
-                              user_rocket.exhaust_velocity(), user_rocket.rocket_area(),
-                              user_rocket.lift_off_weight(), user_rocket.resultant_force(),
-                              user_rocket.acceleration(), user_rocket.burn_velocity(1),
-                              user_rocket.burn_velocity(2), user_rocket.burn_height(1),
-                              user_rocket.burn_height(2))
-        # deposits a tuple into a list
-        rocket_calcs.append(store_rocket_calcs)
+        if storage_option == "yes":
+            # stores rocket calculations in a tuple
+            store_rocket_calcs = (user_rocket.rocket_name(), user_rocket.initial_mass(),
+                                  user_rocket.exhaust_velocity(), user_rocket.rocket_area(),
+                                  user_rocket.lift_off_weight(), user_rocket.resultant_force(),
+                                  user_rocket.acceleration(), user_rocket.burn_velocity(1),
+                                  user_rocket.burn_velocity(2), user_rocket.burn_height(1),
+                                  user_rocket.burn_height(2))
+            # deposits a tuple into a list
+            rocket_calcs.append(store_rocket_calcs)
 
-    game_count += 1
+        game_count += 1
 
-# database entries and commitments
-conn = sqlite3.connect("rocket_data.db")
-c = conn.cursor()
+    # database entries and commitments
+    conn = sqlite3.connect("rocket_data.db")
+    c = conn.cursor()
 
-c.executemany("INSERT INTO rocket_values VALUES (?,?,?,?,?,?,?,?,?,?,?)", rocket_chars)
-c.executemany("INSERT INTO rocket_calculations VALUES (?,?,?,?,?,?,?,?,?,?,?)", rocket_calcs)
+    c.executemany("INSERT INTO rocket_values VALUES (?,?,?,?,?,?,?,?,?,?,?)", rocket_chars)
+    c.executemany("INSERT INTO rocket_calculations VALUES (?,?,?,?,?,?,?,?,?,?,?)", rocket_calcs)
 
-conn.commit()
-conn.close()
+    conn.commit()
+    conn.close()
+
+
+if __name__ == "__main__":
+    main()

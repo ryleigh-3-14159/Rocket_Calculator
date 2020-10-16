@@ -1,6 +1,6 @@
 import math
 
-from . import rocket_engine
+from App.rocket_engine import Engine
 
 
 # Notes: Measurements are in meters, kgs, and seconds
@@ -9,7 +9,7 @@ from . import rocket_engine
 # Count down simulation.
 
 
-class Rocket(rocket_engine):
+class Rocket(Engine):
     # assumed constants
     GRAVITY = 9.81
 
